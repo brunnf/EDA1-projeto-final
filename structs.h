@@ -8,6 +8,7 @@ typedef struct Cliente
     int cpf;
     char *nome;
     int telefone;
+    struct Cliente * prox;
 } cliente;
 
 typedef struct Produto
@@ -15,7 +16,8 @@ typedef struct Produto
     int cod;
     char *nome;
     int preco;
-}Produto;
+    struct Produto * prox;
+} produto;
 
 
 
