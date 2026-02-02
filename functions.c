@@ -156,3 +156,160 @@ void menu_clientes(ListaClientes *lista) {
         }
     } while (opcao != 0);
 }
+
+ListaProdutos* criar_lista_produtos() {
+    ListaProdutos *lista = (ListaProdutos*) malloc(sizeof(ListaProdutos));
+    if (lista != NULL) {
+        lista->head = NULL;
+        lista->qtd = 0;
+    }
+    return lista;
+}
+
+void cadastrar_produto(ListaProdutos *lista) {
+    Produto *novo = (Produto*) malloc(sizeof(Produto));
+    char buffer_nome[100];
+
+    if (novo == NULL) {
+        printf("Erro de memoria!\n");
+        return;
+    }
+
+    printf("\n--- Novo Produto ---\n");
+    printf("Codigo (numero unico): ");
+    scanf("%d", &novo->cod);
+    getchar(); 
+
+    if (buscar_produto_ptr(lista, novo->cod) != NULL) {
+        printf("Erro: Ja existe um produto com este codigo.\n");
+        free(novo);
+        return;
+    }
+
+    printf("Nome do Produto: ");
+    ler_texto(buffer_nome, 100);
+
+    novo->nome = (char*) malloc(strlen(buffer_nome) + 1);
+    strcpy(novo->nome, buffer_nome);
+
+    printf("Preco: ");
+    scanf("%f", &novo->preco);
+
+    printf("Quantidade em estoque: ");
+    scanf("%d", &novo->qtd);
+    getchar(); 
+
+    novo->prox = lista->head;
+    lista->head = novo;
+    lista->qtd++;
+
+    printf("Produto cadastrado com sucesso!\n");
+}
+
+void listar_produtos(ListaProdutos *lista) {
+    if (lista->head == NULL) {
+        printf("\nLista de produtos vazia.\n");
+        return;
+    }
+
+    Produto *atual = lista->head;
+    printf("\n--- Estoque de Produtos (%d itens) ---\n", lista->qtd);
+    while (atual != NULL) {
+        printf("COD: %d | Nome: %s | Preco: R$ %.2f | Qtd: %d\n", 
+               atual->cod, atual->nome, atual->preco, atual->qtd);
+        atual = atual->prox;
+    }
+}
+
+Produto* buscar_produto_ptr(ListaProdutos *lista, int cod) {
+    Produto *atual = lista->head;
+    while (atual != NULL) {
+        if (atual->cod == cod) {
+            return atual;
+        }
+        atual = atual->prox;
+    }
+    return NULL;
+}
+
+void editar_produto(ListaProdutos *lista) {
+    int cod;
+    printf("Digite o Codigo do produto para editar: ");
+    scanf("%d", &cod);
+    getchar(); 
+
+    Produto *p = buscar_produto_ptr(lista, cod);
+
+    if (p != NULL) {
+        char buffer_nome[100];
+        printf("Editando produto: %s (Preco atual: %.2f)\n", p->nome, p->preco);
+        
+        printf("Novo Nome: ");
+        ler_texto(buffer_nome, 100);
+
+        p->nome = (char*) realloc(p->nome, strlen(buffer_nome) + 1);
+        strcpy(p->nome, buffer_nome);
+
+        printf("Novo Preco: ");
+        scanf("%f", &p->preco);
+
+        printf("Nova Quantidade: ");
+        scanf("%d", &p->qtd);
+        getchar();
+
+        printf("Produto atualizado com sucesso!\n");
+    } else {
+        printf("Produto nao encontrado.\n");
+    }
+}
+
+void remover_produto(ListaProdutos *lista) {
+    int cod;
+    printf("Digite o Codigo do produto para remover: ");
+    scanf("%d", &cod);
+    getchar();
+
+    Produto *atual = lista->head;
+    Produto *anterior = NULL;
+
+    while (atual != NULL && atual->cod != cod) {
+        anterior = atual;
+        atual = atual->prox;
+    }
+
+    if (atual == NULL) {
+        printf("Produto nao encontrado.\n");
+        return;
+    }
+
+    if (anterior == NULL) {
+        lista->head = atual->prox;
+    } else {
+        anterior->prox = atual->prox;
+    }
+
+    free(atual->nome); 
+    free(atual);       
+    lista->qtd--;
+    
+    printf("Produto removido com sucesso.\n");
+}
+
+void menu_produtos(ListaProdutos *lista) {
+    int opcao = -1;
+    do {
+        printf("\n--- GESTAO DE PRODUTOS ---\n");
+        printf("1. Cadastrar\n2. Listar\n3. Editar\n4. Remover\n0. Voltar\nOpcao: ");
+        scanf("%d", &opcao);
+        getchar();
+
+        switch(opcao) {
+            case 1: cadastrar_produto(lista); break;
+            case 2: listar_produtos(lista); break;
+            case 3: editar_produto(lista); break;
+            case 4: remover_produto(lista); break;
+            case 0: break;
+            default: printf("\nOpcao invalida!\n");
+        }
+    } while (opcao != 0);
+}

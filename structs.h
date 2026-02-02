@@ -23,4 +23,9 @@ typedef struct Produto {
     struct Produto *prox;
 } Produto;
 
+typedef struct ListaProdutos {
+    Produto *head;
+    int qtd;
+} ListaProdutos;
+
 #endif
