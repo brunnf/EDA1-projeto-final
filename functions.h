@@ -18,5 +18,6 @@ Produto* buscar_produto_ptr(ListaProdutos *lista, int cod);
 void editar_produto(ListaProdutos *lista);
 void remover_produto(ListaProdutos *lista);
 void menu_produtos(ListaProdutos *lista);
+void menu_principal(ListaClientes *lista_c, ListaProdutos *lista_p);
 
 #endif

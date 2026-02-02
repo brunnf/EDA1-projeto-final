@@ -313,3 +313,39 @@ void menu_produtos(ListaProdutos *lista) {
         }
     } while (opcao != 0);
 }
+
+void menu_principal(ListaClientes *lista_c, ListaProdutos *lista_p) {
+    int opcao = -1;
+
+    do {
+        printf("\n=============================\n");
+        printf("      SISTEMA DE GESTAO      \n");
+        printf("=============================\n");
+        printf("1. Gerenciamento de Clientes\n");
+        printf("2. Gerenciamento de Produtos\n");
+        printf("3. Modo Compra (Carrinho)\n");
+        printf("0. Sair\n");
+        printf("-----------------------------\n");
+        printf("Escolha uma opcao: ");
+        scanf("%d", &opcao);
+        getchar();
+
+        switch(opcao) {
+            case 1: 
+                menu_clientes(lista_c); 
+                break;
+            case 2: 
+                menu_produtos(lista_p); 
+                break;
+            case 3:
+                printf("\nPreguiça de fazer agora.\n");
+                break;
+            case 0:
+                printf("\nEncerrando o sistema...\n");
+                break;
+            default:
+                printf("\nOpcao invalida! Tente novamente.\n");
+        }
+
+    } while (opcao != 0);
+}

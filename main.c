@@ -5,7 +5,12 @@
 
 int main() {
     ListaClientes *meus_clientes = criar_lista_clientes();
-    menu_clientes(meus_clientes);
+    ListaProdutos *meus_produtos = criar_lista_produtos();
+
+    menu_principal(meus_clientes, meus_produtos);
+
     free(meus_clientes);
+    free(meus_produtos);
+
     return 0;
 }
