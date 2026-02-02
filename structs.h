@@ -1,24 +1,26 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-#include <stdlib.h>
-
-typedef struct Cliente
-{
-    int cpf;
+typedef struct Cliente {
+    char cpf[15];
     char *nome;
-    int telefone;
-    struct Cliente * prox;
-} cliente;
+    char email[100];
+    char telefone[20];
+    char data_nasc[12];
+    struct Cliente *prox;
+} Cliente;
 
-typedef struct Produto
-{
+typedef struct ListaClientes {
+    Cliente *head;
+    int qtd;
+} ListaClientes;
+
+typedef struct Produto {
     int cod;
     char *nome;
-    int preco;
-    struct Produto * prox;
-} produto;
-
-
+    float preco;
+    int qtd;
+    struct Produto *prox;
+} Produto;
 
 #endif
