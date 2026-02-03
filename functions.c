@@ -5,6 +5,29 @@
 #include "structs.h"
 #include "functions.h"
 
+#ifdef _WIN32
+    #include <windows.h>
+    #define LIMPAR_CMD "cls"
+    void dormir_segundos(float segundos) { Sleep((int)(segundos * 1000)); }
+#else
+    #include <unistd.h>
+    #define LIMPAR_CMD "clear"
+    void dormir_segundos(float segundos) { usleep((int)(segundos * 1000000)); }
+#endif
+
+void limpar_tela() {
+    system(LIMPAR_CMD);
+}
+
+void esperar(float segundos) {
+    dormir_segundos(segundos);
+}
+
+void pausar_enter() {
+    printf("\n[Pressione Enter para continuar...]");
+    getchar(); 
+}
+
 ListaClientes* criar_lista_clientes() {
     ListaClientes *lista = (ListaClientes*) malloc(sizeof(ListaClientes));
     if (lista != NULL) {
@@ -76,6 +99,7 @@ void cadastrar_cliente(ListaClientes *lista) {
 
     if (strlen(novo->cpf) != 11) {
         printf("Erro: CPF invalido.\n");
+        esperar(2.0);
         free(novo);
         return;
     }
@@ -84,6 +108,7 @@ void cadastrar_cliente(ListaClientes *lista) {
         ler_texto(buffer_temp, 100); 
         if (strlen(buffer_temp) == 0) {
             printf("Erro: O nome nao pode ficar em branco!\n");
+            esperar(2.0);
         }
     } while (strlen(buffer_temp) == 0);
 
@@ -111,11 +136,14 @@ void cadastrar_cliente(ListaClientes *lista) {
     lista->head = novo;
     lista->qtd++;
     printf("Cliente cadastrado com sucesso!\n");
+    esperar(1.5);
 }
 
 void listar_clientes(ListaClientes *lista) {
+    limpar_tela();
     if (lista->head == NULL) {
         printf("\nLista vazia.\n");
+        pausar_enter();
         return;
     }
 
@@ -133,6 +161,7 @@ void listar_clientes(ListaClientes *lista) {
                
         atual = atual->prox;
     }
+    pausar_enter();
 }
 
 Cliente* buscar_cliente_ptr(ListaClientes *lista, char *cpf_busca) {
@@ -195,8 +224,10 @@ void editar_cliente(ListaClientes *lista) {
         } while (1);
 
         printf("Dados atualizados com sucesso!\n");
+        esperar(1.5);
     } else {
         printf("Cliente nao encontrado.\n");
+        esperar(1.5);
     }
 }
 
@@ -228,11 +259,13 @@ void remover_cliente(ListaClientes *lista) {
     free(atual);
     lista->qtd--;
     printf("Cliente removido com sucesso.\n");
+    esperar(1.5);
 }
 
 void menu_clientes(ListaClientes *lista) {
     int opcao=-1;
     do {
+        limpar_tela();
         printf("\n--- GESTAO DE CLIENTES ---\n");
         printf("1. Cadastrar\n2. Listar\n3. Editar\n4. Remover\n0. Voltar\nOpcao: ");
         scanf("%d", &opcao);
@@ -245,6 +278,7 @@ void menu_clientes(ListaClientes *lista) {
             case 4: remover_cliente(lista); break;
             case 0: break;
             default: printf("\nOpcao invalida! Tente apenas numeros de 0 a 4.\n");
+            esperar(1.5);
         }
     } while (opcao != 0);
 }
@@ -274,6 +308,7 @@ void cadastrar_produto(ListaProdutos *lista) {
 
     if (buscar_produto_ptr(lista, novo->cod) != NULL) {
         printf("Erro: Ja existe um produto com este codigo.\n");
+        esperar(2.0);
         free(novo);
         return;
     }
@@ -296,11 +331,14 @@ void cadastrar_produto(ListaProdutos *lista) {
     lista->qtd++;
 
     printf("Produto cadastrado com sucesso!\n");
+    esperar(1.5);
 }
 
 void listar_produtos(ListaProdutos *lista) {
+    limpar_tela();
     if (lista->head == NULL) {
         printf("\nLista de produtos vazia.\n");
+        pausar_enter();
         return;
     }
 
@@ -311,6 +349,7 @@ void listar_produtos(ListaProdutos *lista) {
                atual->cod, atual->nome, atual->preco, atual->qtd);
         atual = atual->prox;
     }
+    pausar_enter();
 }
 
 Produto* buscar_produto_ptr(ListaProdutos *lista, int cod) {
@@ -356,8 +395,10 @@ void editar_produto(ListaProdutos *lista) {
         }
 
         printf("Produto atualizado com sucesso!\n");
+        esperar(1.5);
     } else {
         printf("Produto nao encontrado.\n");
+        esperar(2.0);
     }
 }
 
@@ -377,6 +418,7 @@ void remover_produto(ListaProdutos *lista) {
 
     if (atual == NULL) {
         printf("Produto nao encontrado.\n");
+        esperar(2.0);
         return;
     }
 
@@ -391,11 +433,13 @@ void remover_produto(ListaProdutos *lista) {
     lista->qtd--;
     
     printf("Produto removido com sucesso.\n");
+    esperar(1.5);
 }
 
 void menu_produtos(ListaProdutos *lista) {
     int opcao = -1;
     do {
+        limpar_tela();
         printf("\n--- GESTAO DE PRODUTOS ---\n");
         printf("1. Cadastrar\n2. Listar\n3. Editar\n4. Remover\n0. Voltar\nOpcao: ");
         scanf("%d", &opcao);
@@ -408,6 +452,7 @@ void menu_produtos(ListaProdutos *lista) {
             case 4: remover_produto(lista); break;
             case 0: break;
             default: printf("\nOpcao invalida!\n");
+            esperar(1.5);
         }
     } while (opcao != 0);
 }
@@ -423,6 +468,7 @@ void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p) {
     Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
     if (cli == NULL) {
         printf("Cliente nao encontrado!\n");
+        esperar(2.0);
         return;
     }
 
@@ -436,6 +482,7 @@ void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p) {
     Produto *prod = buscar_produto_ptr(lista_p, cod);
     if (prod == NULL) {
         printf("Produto nao existe!\n");
+        esperar(2.0);
         return;
     }
 
@@ -445,6 +492,7 @@ void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p) {
 
     if (qtd > prod->qtd) {
         printf("Erro: Estoque insuficiente! Disponivel: %d\n", prod->qtd);
+        esperar(2.0);
         return;
     }
 
@@ -463,9 +511,12 @@ void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p) {
     cli->carrinho = novo_item;
 
     printf("Produto adicionado ao carrinho de %s!\n", cli->nome);
+    esperar(1.5);
 }
 
 void ver_carrinho(ListaClientes *lista_c) {
+    limpar_tela();
+
     char cpf[20];
     char cpf_limpo[15];
     printf("\n--- Ver Carrinho ---\n");
@@ -476,11 +527,13 @@ void ver_carrinho(ListaClientes *lista_c) {
     Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
     if (cli == NULL) {
         printf("Cliente nao encontrado!\n");
+        esperar(2.0);
         return;
     }
 
     if (cli->carrinho == NULL) {
         printf("O carrinho de %s esta vazio.\n", cli->nome);
+        pausar_enter();
         return;
     }
 
@@ -504,6 +557,8 @@ void ver_carrinho(ListaClientes *lista_c) {
     printf("--------------------------------------------------\n");
     printf("TOTAL DE ITENS: %d\n", total_itens);
     printf("VALOR TOTAL DA COMPRA: R$ %.2f\n", total);
+
+    pausar_enter();
 }
 
 void remover_do_carrinho(ListaClientes *lista_c) {
@@ -517,11 +572,13 @@ void remover_do_carrinho(ListaClientes *lista_c) {
     Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
     if (cli == NULL) {
         printf("Cliente nao encontrado!\n");
+        esperar(2.0);
         return;
     }
 
     if (cli->carrinho == NULL) {
         printf("Carrinho vazio.\n");
+        esperar(2.0);
         return;
     }
 
@@ -542,6 +599,7 @@ void remover_do_carrinho(ListaClientes *lista_c) {
 
     if (atual == NULL) {
         printf("Item nao encontrado no carrinho.\n");
+        esperar(2.0);
         return;
     }
 
@@ -555,11 +613,13 @@ void remover_do_carrinho(ListaClientes *lista_c) {
 
     free(atual); 
     printf("Item removido do carrinho!\n");
+    esperar(1.5);
 }
 
 void menu_compras(ListaClientes *lista_c, ListaProdutos *lista_p) {
     int opcao = -1;
     do {
+        limpar_tela();
         printf("\n--- MODO COMPRA (CARRINHO) ---\n");
         printf("1. Adicionar Produto ao Carrinho\n");
         printf("2. Ver Carrinho / Finalizar\n");
@@ -575,6 +635,7 @@ void menu_compras(ListaClientes *lista_c, ListaProdutos *lista_p) {
             case 3: remover_do_carrinho(lista_c); break;
             case 0: break;
             default: printf("Opcao invalida.\n");
+            esperar(1.5);
         }
     } while (opcao != 0);
 }
@@ -583,6 +644,7 @@ void menu_principal(ListaClientes *lista_c, ListaProdutos *lista_p) {
     int opcao = -1;
 
     do {
+        limpar_tela();
         printf("\n=============================\n");
         printf("      SISTEMA DE GESTAO      \n");
         printf("=============================\n");
@@ -610,6 +672,7 @@ void menu_principal(ListaClientes *lista_c, ListaProdutos *lista_p) {
                 break;
             default:
                 printf("\nOpcao invalida! Tente novamente.\n");
+                esperar(1.5);
         }
 
     } while (opcao != 0);

@@ -33,4 +33,8 @@ void menu_principal(ListaClientes *lista_c, ListaProdutos *lista_p);
 
 void liberar_sistema(ListaClientes *lista_c, ListaProdutos *lista_p);
 
+void limpar_tela();
+void esperar(float segundos);
+void pausar_enter();
+
 #endif
