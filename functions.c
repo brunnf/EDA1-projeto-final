@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "structs.h"
 #include "functions.h"
 
@@ -18,37 +19,97 @@ void ler_texto(char *buffer, int tamanho) {
     buffer[strcspn(buffer, "\n")] = 0;
 }
 
-void cadastrar_cliente(ListaClientes *lista) {
-    Cliente *novo = (Cliente*) malloc(sizeof(Cliente));
-    char buffer_nome[100];
+void formatar_nome(char *nome) {
+    int nova_palavra = 1;
+    for (int i = 0; nome[i] != '\0'; i++) {
+        if (isspace(nome[i])) {
+            nova_palavra = 1;
+        } else if (nova_palavra) {
+            nome[i] = toupper(nome[i]);
+            nova_palavra = 0;
+        } else {
+            nome[i] = tolower(nome[i]);
+        }
+    }
+}
 
-    if (novo == NULL) {
-        printf("Erro de memoria!\n");
+void limpar_cpf(char *cpf_destino, char *cpf_origem) {
+    int j = 0;
+    for (int i = 0; cpf_origem[i] != '\0'; i++) {
+        if (isdigit(cpf_origem[i])) {
+            cpf_destino[j++] = cpf_origem[i];
+        }
+    }
+    cpf_destino[j] = '\0';
+}
+
+int validar_data(char *data) {
+    if (strlen(data) != 10) return 0;
+    if (data[2] != '/' || data[5] != '/') return 0;
+    return 1;
+}
+
+void imprimir_cpf_formatado(char *cpf_limpo) {
+    if (strlen(cpf_limpo) != 11) {
+        printf("%s", cpf_limpo); 
         return;
     }
+    printf("%c%c%c.%c%c%c.%c%c%c-%c%c", 
+           cpf_limpo[0], cpf_limpo[1], cpf_limpo[2],
+           cpf_limpo[3], cpf_limpo[4], cpf_limpo[5],
+           cpf_limpo[6], cpf_limpo[7], cpf_limpo[8],
+           cpf_limpo[9], cpf_limpo[10]);
+}
+
+void cadastrar_cliente(ListaClientes *lista) {
+    Cliente *novo = (Cliente*) malloc(sizeof(Cliente));
+    char buffer_temp[100];
+
+    if (novo == NULL) return;
+    
+    novo->carrinho = NULL;
 
     printf("\n--- Novo Cliente ---\n");
     printf("CPF: ");
-    ler_texto(novo->cpf, 15);
+    ler_texto(buffer_temp, 20);
+    limpar_cpf(novo->cpf, buffer_temp);
 
-    printf("Nome: ");
-    ler_texto(buffer_nome, 100);
-    novo->nome = (char*) malloc(strlen(buffer_nome) + 1);
-    strcpy(novo->nome, buffer_nome);
+    if (strlen(novo->cpf) != 11) {
+        printf("Erro: CPF invalido.\n");
+        free(novo);
+        return;
+    }
+    do {
+        printf("Nome: ");
+        ler_texto(buffer_temp, 100); 
+        if (strlen(buffer_temp) == 0) {
+            printf("Erro: O nome nao pode ficar em branco!\n");
+        }
+    } while (strlen(buffer_temp) == 0);
+
+    formatar_nome(buffer_temp);
+
+    novo->nome = (char*) malloc(strlen(buffer_temp) + 1);
+    strcpy(novo->nome, buffer_temp);
 
     printf("Email: ");
+    novo->email = (char*) malloc(100 * sizeof(char));
     ler_texto(novo->email, 100);
+    novo->email = (char*) realloc(novo->email, strlen(novo->email) + 1);
+
     printf("Telefone: ");
     ler_texto(novo->telefone, 20);
-    printf("Data Nasc: ");
-    ler_texto(novo->data_nasc, 12);
 
-    novo->carrinho = NULL;
+    do {
+        printf("Data Nasc (DD/MM/AAAA): ");
+        ler_texto(novo->data_nasc, 12);
+        if (!validar_data(novo->data_nasc)) printf("Formato invalido!\n");
+        else break;
+    } while (1);
 
     novo->prox = lista->head;
     lista->head = novo;
     lista->qtd++;
-
     printf("Cliente cadastrado com sucesso!\n");
 }
 
@@ -61,16 +122,26 @@ void listar_clientes(ListaClientes *lista) {
     Cliente *atual = lista->head;
     printf("\n--- Lista de Clientes (%d total) ---\n", lista->qtd);
     while (atual != NULL) {
-        printf("CPF: %s | Nome: %s | Email: %s | Tel: %s | Nasc: %s\n", 
-               atual->cpf, atual->nome, atual->email, atual->telefone, atual->data_nasc);
+        printf("CPF: ");
+        imprimir_cpf_formatado(atual->cpf); 
+        
+        printf(" | Nome: %s | Email: %s | Tel: %s | Nasc: %s\n", 
+               atual->nome, 
+               atual->email, 
+               atual->telefone, 
+               atual->data_nasc); 
+               
         atual = atual->prox;
     }
 }
 
 Cliente* buscar_cliente_ptr(ListaClientes *lista, char *cpf_busca) {
+    char cpf_limpo[20];
+    limpar_cpf(cpf_limpo, cpf_busca);
+
     Cliente *atual = lista->head;
     while (atual != NULL) {
-        if (strcmp(atual->cpf, cpf_busca) == 0) {
+        if (strcmp(atual->cpf, cpf_limpo) == 0) {
             return atual;
         }
         atual = atual->prox;
@@ -79,29 +150,49 @@ Cliente* buscar_cliente_ptr(ListaClientes *lista, char *cpf_busca) {
 }
 
 void editar_cliente(ListaClientes *lista) {
-    char cpf[15];
-    printf("Digite o CPF para editar: ");
-    ler_texto(cpf, 15);
-
+    char cpf[20];
+    char buffer[100]; 
+    printf("CPF para editar: ");
+    ler_texto(cpf, 20);
+    
     Cliente *q = buscar_cliente_ptr(lista, cpf);
-
     if (q != NULL) {
-        char buffer_nome[100];
-        printf("Editando dados de: %s\n", q->nome);
+        printf("--- Editando Cliente (Deixe em branco e aperte Enter para manter o atual) ---\n");
+
+        printf("Nome atual [%s] - Novo: ", q->nome);
+        ler_texto(buffer, 100);
         
-        printf("Novo Nome: ");
-        ler_texto(buffer_nome, 100);
-        q->nome = (char*) realloc(q->nome, strlen(buffer_nome) + 1);
-        strcpy(q->nome, buffer_nome);
+        if (strlen(buffer) > 0) {
+            formatar_nome(buffer);
+            q->nome = (char*) realloc(q->nome, strlen(buffer) + 1);
+            strcpy(q->nome, buffer);
+        }
 
-        printf("Novo Email: ");
-        ler_texto(q->email, 100);
+        printf("Email atual [%s] - Novo: ", q->email);
+        ler_texto(buffer, 100);
+        if (strlen(buffer) > 0) {
+            q->email = (char*) realloc(q->email, strlen(buffer) + 1);
+            strcpy(q->email, buffer);
+        }
 
-        printf("Novo Telefone: ");
-        ler_texto(q->telefone, 20);
+        printf("Telefone atual [%s] - Novo: ", q->telefone);
+        ler_texto(buffer, 20);
+        if (strlen(buffer) > 0) {
+            strcpy(q->telefone, buffer);
+        }
 
-        printf("Nova Data Nasc: ");
-        ler_texto(q->data_nasc, 12);
+        do {
+            printf("Data Nasc atual [%s] - Nova (DD/MM/AAAA): ", q->data_nasc);
+            ler_texto(buffer, 12);
+            if (strlen(buffer) == 0) break; 
+            
+            if (!validar_data(buffer)) {
+                printf("Formato invalido!\n");
+            } else {
+                strcpy(q->data_nasc, buffer);
+                break;
+            }
+        } while (1);
 
         printf("Dados atualizados com sucesso!\n");
     } else {
@@ -110,33 +201,32 @@ void editar_cliente(ListaClientes *lista) {
 }
 
 void remover_cliente(ListaClientes *lista) {
-    char cpf_busca[15];
-    printf("Digite o CPF para remover: ");
-    ler_texto(cpf_busca, 15);
+    char cpf_busca[20];
+    char cpf_limpo[15];
+    printf("CPF para remover: ");
+    ler_texto(cpf_busca, 20);
+    limpar_cpf(cpf_limpo, cpf_busca);
 
-    Cliente *atual = lista->head;
-    Cliente *anterior = NULL;
-
-    while (atual != NULL && strcmp(atual->cpf, cpf_busca) != 0) {
+    Cliente *atual = lista->head, *anterior = NULL;
+    while (atual != NULL && strcmp(atual->cpf, cpf_limpo) != 0) {
         anterior = atual;
         atual = atual->prox;
     }
-
-    if (atual == NULL) {
-        printf("Cliente nao encontrado.\n");
-        return;
+    if (atual == NULL) return;
+    if (anterior == NULL) lista->head = atual->prox;
+    else anterior->prox = atual->prox;
+    
+    ItemCarrinho *item = atual->carrinho;
+    while (item != NULL) {
+        ItemCarrinho *temp = item;
+        item = item->prox;
+        free(temp);
     }
-
-    if (anterior == NULL) {
-        lista->head = atual->prox;
-    } else {
-        anterior->prox = atual->prox;
-    }
-
+    
     free(atual->nome);
+    free(atual->email);
     free(atual);
     lista->qtd--;
-    
     printf("Cliente removido com sucesso.\n");
 }
 
@@ -236,6 +326,7 @@ Produto* buscar_produto_ptr(ListaProdutos *lista, int cod) {
 
 void editar_produto(ListaProdutos *lista) {
     int cod;
+    char buffer[100];
     printf("Digite o Codigo do produto para editar: ");
     scanf("%d", &cod);
     getchar(); 
@@ -243,21 +334,26 @@ void editar_produto(ListaProdutos *lista) {
     Produto *p = buscar_produto_ptr(lista, cod);
 
     if (p != NULL) {
-        char buffer_nome[100];
-        printf("Editando produto: %s (Preco atual: %.2f)\n", p->nome, p->preco);
+        printf("--- Editando Produto (Aperte Enter para manter o atual) ---\n\n");
         
-        printf("Novo Nome: ");
-        ler_texto(buffer_nome, 100);
+        printf("Nome atual '%s' - Novo: ", p->nome);
+        ler_texto(buffer, 100);
+        if (strlen(buffer) > 0) {
+            p->nome = (char*) realloc(p->nome, strlen(buffer) + 1);
+            strcpy(p->nome, buffer);
+        }
 
-        p->nome = (char*) realloc(p->nome, strlen(buffer_nome) + 1);
-        strcpy(p->nome, buffer_nome);
+        printf("Preco atual 'R$ %.2f' - Novo: ", p->preco);
+        ler_texto(buffer, 20);
+        if (strlen(buffer) > 0) {
+            p->preco = atof(buffer); 
+        }
 
-        printf("Novo Preco: ");
-        scanf("%f", &p->preco);
-
-        printf("Nova Quantidade: ");
-        scanf("%d", &p->qtd);
-        getchar();
+        printf("Estoque atual '%d' - Novo: ", p->qtd);
+        ler_texto(buffer, 20);
+        if (strlen(buffer) > 0) {
+            p->qtd = atoi(buffer); 
+        }
 
         printf("Produto atualizado com sucesso!\n");
     } else {
@@ -317,12 +413,14 @@ void menu_produtos(ListaProdutos *lista) {
 }
 
 void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p) {
-    char cpf[15];
+    char cpf[20];
+    char cpf_limpo[15];
     printf("\n--- Adicionar Produtos ao Carrinho ---\n");
     printf("Digite o CPF do Cliente comprador: ");
-    ler_texto(cpf, 15);
+    ler_texto(cpf, 20);
+    limpar_cpf(cpf_limpo, cpf);
 
-    Cliente *cli = buscar_cliente_ptr(lista_c, cpf);
+    Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
     if (cli == NULL) {
         printf("Cliente nao encontrado!\n");
         return;
@@ -359,6 +457,8 @@ void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p) {
     novo_item->produto = prod; 
     novo_item->qtd_compra = qtd;
 
+    prod->qtd -= qtd;
+
     novo_item->prox = cli->carrinho;
     cli->carrinho = novo_item;
 
@@ -366,12 +466,14 @@ void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p) {
 }
 
 void ver_carrinho(ListaClientes *lista_c) {
-    char cpf[15];
+    char cpf[20];
+    char cpf_limpo[15];
     printf("\n--- Ver Carrinho ---\n");
     printf("Digite o CPF do Cliente: ");
-    ler_texto(cpf, 15);
+    ler_texto(cpf, 20);
+    limpar_cpf(cpf_limpo, cpf);
 
-    Cliente *cli = buscar_cliente_ptr(lista_c, cpf);
+    Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
     if (cli == NULL) {
         printf("Cliente nao encontrado!\n");
         return;
@@ -392,8 +494,8 @@ void ver_carrinho(ListaClientes *lista_c) {
     while (item != NULL) {
         float subtotal = item->produto->preco * item->qtd_compra;
         
-        printf("- %s | Qtd: %d | Unit: R$ %.2f | Sub: R$ %.2f\n", 
-               item->produto->nome, item->qtd_compra, item->produto->preco, subtotal);
+        printf("- COD: %d | %s | Qtd: %d | Unit: R$ %.2f | Sub: R$ %.2f\n", 
+               item->produto->cod, item->produto->nome, item->qtd_compra, item->produto->preco, subtotal);
         
         total += subtotal;
         total_itens += item->qtd_compra;
@@ -405,12 +507,14 @@ void ver_carrinho(ListaClientes *lista_c) {
 }
 
 void remover_do_carrinho(ListaClientes *lista_c) {
-    char cpf[15];
+    char cpf[20];
+    char cpf_limpo[15];
     printf("\n--- Remover Item do Carrinho ---\n");
     printf("Digite o CPF do Cliente: ");
     ler_texto(cpf, 15);
+    limpar_cpf(cpf_limpo, cpf);
 
-    Cliente *cli = buscar_cliente_ptr(lista_c, cpf);
+    Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
     if (cli == NULL) {
         printf("Cliente nao encontrado!\n");
         return;
@@ -440,6 +544,8 @@ void remover_do_carrinho(ListaClientes *lista_c) {
         printf("Item nao encontrado no carrinho.\n");
         return;
     }
+
+    atual->produto->qtd += atual->qtd_compra;
 
     if (anterior == NULL) {
         cli->carrinho = atual->prox;
@@ -507,4 +613,36 @@ void menu_principal(ListaClientes *lista_c, ListaProdutos *lista_p) {
         }
 
     } while (opcao != 0);
+}
+
+void liberar_sistema(ListaClientes *lista_c, ListaProdutos *lista_p) {
+    Cliente *atual_c = lista_c->head;
+    while (atual_c != NULL) {
+        Cliente *temp_c = atual_c;
+        atual_c = atual_c->prox;
+
+        ItemCarrinho *item = temp_c->carrinho;
+        while (item != NULL) {
+            ItemCarrinho *temp_i = item;
+            item = item->prox;
+            free(temp_i);
+        }
+
+        free(temp_c->nome);
+        free(temp_c->email);
+        free(temp_c);
+    }
+    free(lista_c); 
+
+    Produto *atual_p = lista_p->head;
+    while (atual_p != NULL) {
+        Produto *temp_p = atual_p;
+        atual_p = atual_p->prox;
+        
+        free(temp_p->nome); 
+        free(temp_p);       
+    }
+    free(lista_p); 
+
+    printf("Memoria liberada com sucesso. Sistema encerrado.\n");
 }

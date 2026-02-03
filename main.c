@@ -9,8 +9,7 @@ int main() {
 
     menu_principal(meus_clientes, meus_produtos);
 
-    free(meus_clientes);
-    free(meus_produtos);
+    liberar_sistema(meus_clientes, meus_produtos);
 
     return 0;
 }

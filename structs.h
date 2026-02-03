@@ -1,16 +1,12 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-typedef struct ItemCarrinho {
-    struct Produto *produto;
-    int qtd_compra;          
-    struct ItemCarrinho *prox;
-} ItemCarrinho;
+
 
 typedef struct Cliente {
-    char cpf[15];
+    char cpf[20];
     char *nome;
-    char email[100];
+    char *email;
     char telefone[20];
     char data_nasc[12];
     struct ItemCarrinho *carrinho;
@@ -34,5 +30,11 @@ typedef struct ListaProdutos {
     Produto *head;
     int qtd;
 } ListaProdutos;
+
+typedef struct ItemCarrinho {
+    struct Produto *produto;
+    int qtd_compra;          
+    struct ItemCarrinho *prox;
+} ItemCarrinho;
 
 #endif
