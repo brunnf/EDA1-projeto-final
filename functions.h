@@ -19,5 +19,9 @@ void editar_produto(ListaProdutos *lista);
 void remover_produto(ListaProdutos *lista);
 void menu_produtos(ListaProdutos *lista);
 void menu_principal(ListaClientes *lista_c, ListaProdutos *lista_p);
+void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p);
+void ver_carrinho(ListaClientes *lista_c);
+void remover_do_carrinho(ListaClientes *lista_c);
+void menu_compras(ListaClientes *lista_c, ListaProdutos *lista_p);
 
 #endif
