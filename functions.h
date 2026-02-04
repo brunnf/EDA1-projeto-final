@@ -8,6 +8,8 @@ void formatar_nome(char *nome);
 void limpar_cpf(char *cpf_destino, char *cpf_origem);
 int validar_data(char *data);
 void imprimir_cpf_formatado(char *cpf_limpo);
+int eh_digito(char *str);
+int eh_float(char *str);
 
 ListaClientes* criar_lista_clientes();
 void cadastrar_cliente(ListaClientes *lista);
@@ -25,9 +27,9 @@ void editar_produto(ListaProdutos *lista);
 void remover_produto(ListaProdutos *lista);
 void menu_produtos(ListaProdutos *lista);
 
-void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p);
-void ver_carrinho(ListaClientes *lista_c);
-void remover_do_carrinho(ListaClientes *lista_c);
+void adicionar_ao_carrinho(Cliente *cli, ListaProdutos *lista_p);
+void ver_carrinho(Cliente *cli);
+void remover_do_carrinho(Cliente *cli);
 void menu_compras(ListaClientes *lista_c, ListaProdutos *lista_p);
 void menu_principal(ListaClientes *lista_c, ListaProdutos *lista_p);
 

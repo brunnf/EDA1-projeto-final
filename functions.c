@@ -537,20 +537,9 @@ void menu_produtos(ListaProdutos *lista) {
     } while (opcao != 0);
 }
 
-void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p) {
-    char cpf[20];
-    char cpf_limpo[15];
-    printf("\n--- Adicionar Produtos ao Carrinho ---\n");
-    printf("Digite o CPF do Cliente comprador: ");
-    ler_texto(cpf, 20);
-    limpar_cpf(cpf_limpo, cpf);
-
-    Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
-    if (cli == NULL) {
-        printf("Cliente nao encontrado!\n");
-        esperar(2.0);
-        return;
-    }
+void adicionar_ao_carrinho(Cliente *cli, ListaProdutos *lista_p) {
+    limpar_tela();
+    printf("\n--- Adicionar ao Carrinho de: %s ---\n", cli->nome);
 
     listar_produtos(lista_p);
     
@@ -585,34 +574,20 @@ void adicionar_ao_carrinho(ListaClientes *lista_c, ListaProdutos *lista_p) {
     novo_item->produto = prod; 
     novo_item->qtd_compra = qtd;
 
-    prod->qtd -= qtd;
+    prod->qtd -= qtd; 
 
     novo_item->prox = cli->carrinho;
     cli->carrinho = novo_item;
 
-    printf("Produto adicionado ao carrinho de %s!\n", cli->nome);
+    printf("\n>> Produto adicionado ao carrinho com sucesso!\n");
     esperar(1.5);
 }
 
-void ver_carrinho(ListaClientes *lista_c) {
+void ver_carrinho(Cliente *cli) {
     limpar_tela();
 
-    char cpf[20];
-    char cpf_limpo[15];
-    printf("\n--- Ver Carrinho ---\n");
-    printf("Digite o CPF do Cliente: ");
-    ler_texto(cpf, 20);
-    limpar_cpf(cpf_limpo, cpf);
-
-    Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
-    if (cli == NULL) {
-        printf("Cliente nao encontrado!\n");
-        esperar(2.0);
-        return;
-    }
-
     if (cli->carrinho == NULL) {
-        printf("O carrinho de %s esta vazio.\n", cli->nome);
+        printf("\nO carrinho de %s esta vazio.\n", cli->nome);
         pausar_enter();
         return;
     }
@@ -641,27 +616,11 @@ void ver_carrinho(ListaClientes *lista_c) {
     pausar_enter();
 }
 
-void remover_do_carrinho(ListaClientes *lista_c) {
+void remover_do_carrinho(Cliente *cli) {
     limpar_tela();
     
-    char cpf[20];
-    char cpf_limpo[15];
-    
-    printf("\n--- Remover Item do Carrinho ---\n");
-    printf("Digite o CPF do Cliente: ");
-    ler_texto(cpf, 20); 
-    limpar_cpf(cpf_limpo, cpf);
-
-    Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
-    
-    if (cli == NULL) {
-        printf("Cliente nao encontrado!\n");
-        pausar_enter();
-        return;
-    }
-
     if (cli->carrinho == NULL) {
-        printf("O carrinho de %s esta vazio. Nada para remover.\n", cli->nome);
+        printf("\nO carrinho de %s esta vazio. Nada para remover.\n", cli->nome);
         pausar_enter();
         return;
     }
@@ -670,11 +629,8 @@ void remover_do_carrinho(ListaClientes *lista_c) {
     printf("--------------------------------------------------\n");
     ItemCarrinho *temp = cli->carrinho;
     while (temp != NULL) {
-        printf("- COD: %d | %s | Qtd: %d | R$ %.2f\n", 
-               temp->produto->cod, 
-               temp->produto->nome, 
-               temp->qtd_compra, 
-               temp->produto->preco);
+        printf("- COD: %d | %s | Qtd: %d\n", 
+               temp->produto->cod, temp->produto->nome, temp->qtd_compra);
         temp = temp->prox;
     }
     printf("--------------------------------------------------\n");
@@ -694,7 +650,7 @@ void remover_do_carrinho(ListaClientes *lista_c) {
 
     if (atual == NULL) {
         printf("Item nao encontrado neste carrinho.\n");
-        pausar_enter();
+        esperar(2.0);
         return;
     }
 
@@ -707,30 +663,56 @@ void remover_do_carrinho(ListaClientes *lista_c) {
     }
 
     free(atual); 
-    printf("\nItem removido com sucesso!\n");
-    pausar_enter();
+    printf("\n>> Item removido com sucesso!\n");
+    esperar(1.5);
 }
 
 void menu_compras(ListaClientes *lista_c, ListaProdutos *lista_p) {
+    char cpf[20];
+    char cpf_limpo[15];
+
+    limpar_tela();
+    printf("\n=== ACESSO AO CARRINHO ===\n");
+    printf("Digite o CPF do Cliente para iniciar as compras: ");
+    ler_texto(cpf, 20);
+    limpar_cpf(cpf_limpo, cpf);
+
+    Cliente *cli_selecionado = buscar_cliente_ptr(lista_c, cpf_limpo);
+
+    if (cli_selecionado == NULL) {
+        printf("\nErro: Cliente nao encontrado!\n");
+        printf("Cadastre o cliente antes de fazer compras.\n");
+        esperar(2.5);
+        return; 
+    }
+
     int opcao = -1;
     do {
         limpar_tela();
-        printf("\n--- MODO COMPRA (CARRINHO) ---\n");
-        printf("1. Adicionar Produto ao Carrinho\n");
-        printf("2. Ver Carrinho / Finalizar\n");
-        printf("3. Remover Item do Carrinho\n");
-        printf("0. Voltar\n");
+        printf("\n--- CARRINHO DE: %s ---\n", cli_selecionado->nome);
+        printf("1. Adicionar Produto\n");
+        printf("2. Ver Carrinho / Total\n");
+        printf("3. Remover Item\n");
+        printf("0. Sair do Carrinho (Voltar ao Menu Principal)\n");
         printf("Opcao: ");
         scanf("%d", &opcao);
         getchar();
 
         switch(opcao) {
-            case 1: adicionar_ao_carrinho(lista_c, lista_p); break;
-            case 2: ver_carrinho(lista_c); break;
-            case 3: remover_do_carrinho(lista_c); break;
-            case 0: break;
-            default: printf("Opcao invalida.\n");
-            esperar(1.5);
+            case 1:
+                adicionar_ao_carrinho(cli_selecionado, lista_p); 
+                break;
+            case 2: 
+                ver_carrinho(cli_selecionado); 
+                break;
+            case 3: 
+                remover_do_carrinho(cli_selecionado); 
+                break;
+            case 0: 
+                break;
+            default: 
+                printf("Opcao invalida.\n");
+                esperar(1.5);
         }
     } while (opcao != 0);
 }
