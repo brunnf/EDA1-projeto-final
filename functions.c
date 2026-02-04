@@ -243,7 +243,11 @@ void remover_cliente(ListaClientes *lista) {
         anterior = atual;
         atual = atual->prox;
     }
-    if (atual == NULL) return;
+    if (atual == NULL) {
+        printf("Cliente nao encontrado.\n");
+        esperar(1.5);
+        return;
+    }
     if (anterior == NULL) lista->head = atual->prox;
     else anterior->prox = atual->prox;
     
@@ -562,30 +566,45 @@ void ver_carrinho(ListaClientes *lista_c) {
 }
 
 void remover_do_carrinho(ListaClientes *lista_c) {
+    limpar_tela();
+    
     char cpf[20];
     char cpf_limpo[15];
+    
     printf("\n--- Remover Item do Carrinho ---\n");
     printf("Digite o CPF do Cliente: ");
-    ler_texto(cpf, 15);
+    ler_texto(cpf, 20); 
     limpar_cpf(cpf_limpo, cpf);
 
     Cliente *cli = buscar_cliente_ptr(lista_c, cpf_limpo);
+    
     if (cli == NULL) {
         printf("Cliente nao encontrado!\n");
-        esperar(2.0);
+        pausar_enter();
         return;
     }
 
     if (cli->carrinho == NULL) {
-        printf("Carrinho vazio.\n");
-        esperar(2.0);
+        printf("O carrinho de %s esta vazio. Nada para remover.\n", cli->nome);
+        pausar_enter();
         return;
     }
 
-    ver_carrinho(lista_c); 
+    printf("\nItens no carrinho de %s:\n", cli->nome);
+    printf("--------------------------------------------------\n");
+    ItemCarrinho *temp = cli->carrinho;
+    while (temp != NULL) {
+        printf("- COD: %d | %s | Qtd: %d | R$ %.2f\n", 
+               temp->produto->cod, 
+               temp->produto->nome, 
+               temp->qtd_compra, 
+               temp->produto->preco);
+        temp = temp->prox;
+    }
+    printf("--------------------------------------------------\n");
 
     int cod;
-    printf("\nDigite o CODIGO do produto para remover do carrinho: ");
+    printf("\nDigite o CODIGO do produto que deseja remover: ");
     scanf("%d", &cod);
     getchar();
 
@@ -598,8 +617,8 @@ void remover_do_carrinho(ListaClientes *lista_c) {
     }
 
     if (atual == NULL) {
-        printf("Item nao encontrado no carrinho.\n");
-        esperar(2.0);
+        printf("Item nao encontrado neste carrinho.\n");
+        pausar_enter();
         return;
     }
 
@@ -612,8 +631,8 @@ void remover_do_carrinho(ListaClientes *lista_c) {
     }
 
     free(atual); 
-    printf("Item removido do carrinho!\n");
-    esperar(1.5);
+    printf("\nItem removido com sucesso!\n");
+    pausar_enter();
 }
 
 void menu_compras(ListaClientes *lista_c, ListaProdutos *lista_p) {
