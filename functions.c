@@ -37,6 +37,28 @@ ListaClientes* criar_lista_clientes() {
     return lista;
 }
 
+int eh_digito(char *str) {
+    if (strlen(str) == 0) return 0;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (!isdigit(str[i])) return 0;
+    }
+    return 1;
+}
+
+int eh_float(char *str) {
+    if (strlen(str) == 0) return 0;
+    int pontos = 0;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == '.') {
+            pontos++;
+            if (pontos > 1) return 0; 
+        } else if (!isdigit(str[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void ler_texto(char *buffer, int tamanho) {
     fgets(buffer, tamanho, stdin);
     buffer[strcspn(buffer, "\n")] = 0;
@@ -188,7 +210,7 @@ void editar_cliente(ListaClientes *lista) {
     if (q != NULL) {
         printf("--- Editando Cliente (Deixe em branco e aperte Enter para manter o atual) ---\n");
 
-        printf("Nome atual [%s] - Novo: ", q->nome);
+        printf("Nome atual '%s' - Novo: ", q->nome);
         ler_texto(buffer, 100);
         
         if (strlen(buffer) > 0) {
@@ -197,21 +219,21 @@ void editar_cliente(ListaClientes *lista) {
             strcpy(q->nome, buffer);
         }
 
-        printf("Email atual [%s] - Novo: ", q->email);
+        printf("Email atual '%s' - Novo: ", q->email);
         ler_texto(buffer, 100);
         if (strlen(buffer) > 0) {
             q->email = (char*) realloc(q->email, strlen(buffer) + 1);
             strcpy(q->email, buffer);
         }
 
-        printf("Telefone atual [%s] - Novo: ", q->telefone);
+        printf("Telefone atual '%s' - Novo: ", q->telefone);
         ler_texto(buffer, 20);
         if (strlen(buffer) > 0) {
             strcpy(q->telefone, buffer);
         }
 
         do {
-            printf("Data Nasc atual [%s] - Nova (DD/MM/AAAA): ", q->data_nasc);
+            printf("Data Nasc atual '%s' - Nova: ", q->data_nasc);
             ler_texto(buffer, 12);
             if (strlen(buffer) == 0) break; 
             
@@ -298,7 +320,7 @@ ListaProdutos* criar_lista_produtos() {
 
 void cadastrar_produto(ListaProdutos *lista) {
     Produto *novo = (Produto*) malloc(sizeof(Produto));
-    char buffer_nome[100];
+    char buffer_temp[100];
 
     if (novo == NULL) {
         printf("Erro de memoria!\n");
@@ -306,29 +328,54 @@ void cadastrar_produto(ListaProdutos *lista) {
     }
 
     printf("\n--- Novo Produto ---\n");
-    printf("Codigo (numero unico): ");
-    scanf("%d", &novo->cod);
-    getchar(); 
 
-    if (buscar_produto_ptr(lista, novo->cod) != NULL) {
-        printf("Erro: Ja existe um produto com este codigo.\n");
-        esperar(2.0);
-        free(novo);
-        return;
-    }
+    do {
+        printf("Codigo (numero unico): ");
+        ler_texto(buffer_temp, 20);
 
-    printf("Nome do Produto: ");
-    ler_texto(buffer_nome, 100);
+        if (!eh_digito(buffer_temp)) {
+            printf("Erro: Digite apenas numeros!\n");
+        } else {
+            novo->cod = atoi(buffer_temp);
+            if (buscar_produto_ptr(lista, novo->cod) != NULL) {
+                printf("Erro: Ja existe um produto com este codigo.\n");
+                strcpy(buffer_temp, ""); 
+            } else {
+                break;
+            }
+        }
+    } while (1);
 
-    novo->nome = (char*) malloc(strlen(buffer_nome) + 1);
-    strcpy(novo->nome, buffer_nome);
+    do {
+        printf("Nome do Produto: ");
+        ler_texto(buffer_temp, 100);
+        if (strlen(buffer_temp) == 0) {
+            printf("Erro: O nome nao pode ficar em branco!\n");
+        }
+    } while (strlen(buffer_temp) == 0);
 
-    printf("Preco: ");
-    scanf("%f", &novo->preco);
+    formatar_nome(buffer_temp);
 
-    printf("Quantidade em estoque: ");
-    scanf("%d", &novo->qtd);
-    getchar(); 
+    novo->nome = (char*) malloc(strlen(buffer_temp) + 1);
+    strcpy(novo->nome, buffer_temp);
+
+    do {
+        printf("Preco (Ex: 10.50): ");
+        ler_texto(buffer_temp, 20);
+        if (!eh_float(buffer_temp)) {
+            printf("Erro: Preco invalido! Use ponto para decimais.\n");
+        }
+    } while (!eh_float(buffer_temp));
+    novo->preco = atof(buffer_temp);
+
+    do {
+        printf("Quantidade em estoque: ");
+        ler_texto(buffer_temp, 20);
+        if (!eh_digito(buffer_temp)) {
+            printf("Erro: Digite um numero inteiro!\n");
+        }
+    } while (!eh_digito(buffer_temp));
+    novo->qtd = atoi(buffer_temp);
 
     novo->prox = lista->head;
     lista->head = novo;
@@ -370,9 +417,15 @@ Produto* buscar_produto_ptr(ListaProdutos *lista, int cod) {
 void editar_produto(ListaProdutos *lista) {
     int cod;
     char buffer[100];
+    
     printf("Digite o Codigo do produto para editar: ");
-    scanf("%d", &cod);
-    getchar(); 
+    ler_texto(buffer, 20); 
+    if (!eh_digito(buffer)) {
+        printf("Codigo invalido.\n");
+        esperar(1.5);
+        return;
+    }
+    cod = atoi(buffer);
 
     Produto *p = buscar_produto_ptr(lista, cod);
 
@@ -382,21 +435,36 @@ void editar_produto(ListaProdutos *lista) {
         printf("Nome atual '%s' - Novo: ", p->nome);
         ler_texto(buffer, 100);
         if (strlen(buffer) > 0) {
+            formatar_nome(buffer); 
             p->nome = (char*) realloc(p->nome, strlen(buffer) + 1);
             strcpy(p->nome, buffer);
         }
 
-        printf("Preco atual 'R$ %.2f' - Novo: ", p->preco);
-        ler_texto(buffer, 20);
-        if (strlen(buffer) > 0) {
-            p->preco = atof(buffer); 
-        }
+        do {
+            printf("Preco atual 'R$ %.2f' - Novo: ", p->preco);
+            ler_texto(buffer, 20);
+            if (strlen(buffer) == 0) break;
 
-        printf("Estoque atual '%d' - Novo: ", p->qtd);
-        ler_texto(buffer, 20);
-        if (strlen(buffer) > 0) {
-            p->qtd = atoi(buffer); 
-        }
+            if (eh_float(buffer)) {
+                p->preco = atof(buffer);
+                break;
+            } else {
+                printf("Erro: Preco invalido.\n");
+            }
+        } while (1);
+
+        do {
+            printf("Estoque atual '%d' - Novo: ", p->qtd);
+            ler_texto(buffer, 20);
+            if (strlen(buffer) == 0) break; 
+
+            if (eh_digito(buffer)) {
+                p->qtd = atoi(buffer);
+                break;
+            } else {
+                printf("Erro: Quantidade invalida.\n");
+            }
+        } while (1);
 
         printf("Produto atualizado com sucesso!\n");
         esperar(1.5);
@@ -408,9 +476,17 @@ void editar_produto(ListaProdutos *lista) {
 
 void remover_produto(ListaProdutos *lista) {
     int cod;
+    char buffer[20];
+
     printf("Digite o Codigo do produto para remover: ");
-    scanf("%d", &cod);
-    getchar();
+    ler_texto(buffer, 20);
+    
+    if (!eh_digito(buffer)) {
+        printf("Codigo invalido.\n");
+        esperar(1.5);
+        return;
+    }
+    cod = atoi(buffer);
 
     Produto *atual = lista->head;
     Produto *anterior = NULL;
