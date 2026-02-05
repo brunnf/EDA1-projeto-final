@@ -29,11 +29,7 @@ void pausar_enter() {
 }
 
 ListaClientes* criar_lista_clientes() {
-    ListaClientes *lista = (ListaClientes*) malloc(sizeof(ListaClientes));
-    if (lista != NULL) {
-        lista->head = NULL;
-        lista->qtd = 0;
-    }
+    ListaClientes *lista = (ListaClientes*) calloc(1, sizeof(ListaClientes));
     return lista;
 }
 
@@ -136,8 +132,9 @@ void cadastrar_cliente(ListaClientes *lista) {
 
     formatar_nome(buffer_temp);
 
-    novo->nome = (char*) malloc(strlen(buffer_temp) + 1);
+    novo->nome = (char*) malloc(100 * sizeof(char));
     strcpy(novo->nome, buffer_temp);
+    novo->nome = (char*) realloc(novo->nome, strlen(novo->nome) + 1);
 
     printf("Email: ");
     novo->email = (char*) malloc(100 * sizeof(char));
@@ -310,11 +307,7 @@ void menu_clientes(ListaClientes *lista) {
 }
 
 ListaProdutos* criar_lista_produtos() {
-    ListaProdutos *lista = (ListaProdutos*) malloc(sizeof(ListaProdutos));
-    if (lista != NULL) {
-        lista->head = NULL;
-        lista->qtd = 0;
-    }
+    ListaProdutos *lista = (ListaProdutos*) calloc(1, sizeof(ListaProdutos));
     return lista;
 }
 
@@ -330,7 +323,7 @@ void cadastrar_produto(ListaProdutos *lista) {
     printf("\n--- Novo Produto ---\n");
 
     do {
-        printf("Codigo (numero unico): ");
+        printf("Codigo: ");
         ler_texto(buffer_temp, 20);
 
         if (!eh_digito(buffer_temp)) {
@@ -360,7 +353,7 @@ void cadastrar_produto(ListaProdutos *lista) {
     strcpy(novo->nome, buffer_temp);
 
     do {
-        printf("Preco (Ex: 10.50): ");
+        printf("Preco: ");
         ler_texto(buffer_temp, 20);
         if (!eh_float(buffer_temp)) {
             printf("Erro: Preco invalido! Use ponto para decimais.\n");
